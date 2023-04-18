@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+
+  <body>
+    <!-- Ini adalah sign in buttonnya dengan google -->
+    <div id="buttonDiv"></div>
+
+    <!-- Required Google Platform Library -->
+    <!-- Ini digunakan untuk mengakses dan membuat script untuk google signin -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- Jquery -->
+    <script
+      src="https://code.jquery.com/jquery-3.6.0.min.js"
+      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+      crossorigin="anonymous"
+    ></script>
+
+    <!-- Ini adalah custom scriptnya -->
+    <script>
+      // Ini adalah function yang dipakai di bawah
+      // Pada saat memanggil google sign in "INITIALIZE"
+      // dan ada fungsi "Callback"-nya
+      function handleCredentialResponse(response) {
+        // Ini JWT dari si Google, JANGAN DIGUNAKAN AS-IT-IS di backendn-ya kita !
+        console.log("Encoded JWT ID token: " + response.credential);
+
+        // Menggunakan ajax call ke server dan mengirimkan data yang dibutuhkan
+        // ingat pada backend kita tidak boleh mengirimkan data name dan email
+        // secara langsung ke server
+        // tapi harus menggunakan id_token yang disediakan oleh google
+        $.ajax({
+          url: "http://localhost:3000/login-google",
+          method: "POST",
+          data: {
+            // Kita mengirimkan token yang didapat dari si Google, ke Servernya kita
+            // Untuk nanti didecode di sisi server
+            token: response.credential,
+          },
+        })
+          .done(function (resp) {
+            // di sini diketahui bahwa resp adalah berbentuk object dengan
+            // sebuah prop dengan nama accesss_token
+            console.log(resp);
+
+            // simpan data ini ke dalam localStorage
+            localStorage.setItem("access_token", resp.access_token);
+          })
+          .fail(function (err) {
+            console.log(err);
+          });
+      }
+
+      $(document).ready(function () {
+        google.accounts.id.initialize({
+          client_id:
+            "517430794824-0vo2m9ntml49t2ptr0r56t7103ob19uv.apps.googleusercontent.com",
+          callback: handleCredentialResponse,
+        });
+        google.accounts.id.renderButton(
+          document.getElementById("buttonDiv"),
+          { theme: "outline", size: "large" } // customization attributes
+        );
+        google.accounts.id.prompt(); // also display the One Tap dialog
+      });
+    </script>
+  </body>
+</html>
